@@ -583,12 +583,11 @@
     // ═══════════════════════════════════════════════════════
     const CONFIG = {
       // Google Apps Script web app URL (after deploying)
-      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzuS3o_TVuOndmPMUc9o2He5RtZuZ8gQPkPTUV7g5gK32wb8TEQf5gTidMP7EL36UEQ/exec',
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbymFrL8gOiUnAa0380gSLfdXLEq8HPl8k5Llb6jkjjd2Wb66IribquQDgbinQi0TTPKYg/exec',
 
       // Discord OAuth — Client ID only (secret stays on backend)
       DISCORD_CLIENT_ID: '1533142397758734356',
       DISCORD_REDIRECT_URI: 'https://sean-waitkus.github.io/hashira-bank/',
-
       // Your org name
       ORG_NAME: 'Hashira-o7',
 
@@ -618,7 +617,7 @@
         client_id: CONFIG.DISCORD_CLIENT_ID,
         redirect_uri: CONFIG.DISCORD_REDIRECT_URI,
         response_type: 'code',  // Authorization code flow (not implicit)
-        scope: 'identify'
+        scope: 'identify guilds.members.read'
       });
       return `https://discord.com/api/oauth2/authorize?${params}`;
     }
@@ -691,7 +690,7 @@
       const fetchItems = useCallback(async () => {
         setItemsLoading(true);
         try {
-          const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=getItems&userId=${user.id}`);
+          const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=getItems&userId=${user.id}&accessToken=${encodeURIComponent(user.accessToken)}`);
           const data = await res.json();
           if (data.error === 'ACCESS_DENIED') {
             setAuthError({ error: 'ACCESS_REVOKED', message: 'Your access has been revoked. Your server role may have changed.' });
@@ -740,7 +739,8 @@
               action: 'addItems',
               items: validRows,
               contributor: user.displayName || user.username,
-              userId: user.id
+              userId: user.id,
+              accessToken: user.accessToken
             })
           });
           const result = await res.json();
@@ -770,7 +770,7 @@
           const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'deleteItem', id: itemId, userId: user.id })
+            body: JSON.stringify({ action: 'deleteItem', id: itemId, userId: user.id, accessToken: user.accessToken })
           });
           const result = await res.json();
           if (result.success) {
