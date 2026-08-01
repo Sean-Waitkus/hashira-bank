@@ -22,6 +22,10 @@ function App() {
   const [batchItems, setBatchItems] = useState([emptyItemRow()]);
   const [formStatus, setFormStatus] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [locationStatus, setLocationStatus] = useState(null);
+  const [locationResult, setLocationResult] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
 
   // ── Auth Flow ──
   useEffect(() => {
@@ -134,6 +138,80 @@ function App() {
     }
   };
 
+  // ── Confirm Item (admin: Pending → Confirmed) ──
+  const handleConfirmItem = async (itemId) => {
+    try {
+      const result = await updateItemApi({ id: itemId, status: 'Confirmed' }, user);
+      if (result.success) {
+        fetchItems();
+      } else if (result.message) {
+        alert(result.message);
+      }
+    } catch (e) {
+      console.error('Confirm error:', e);
+    }
+  };
+
+  // ── Transfer Item Custody (admin-only) ──
+  const handleTransferItem = async (itemId, transferredTo) => {
+    try {
+      const result = await transferItemApi(itemId, transferredTo, user);
+      if (result.success) {
+        fetchItems();
+      } else if (result.message) {
+        alert(result.message);
+      }
+      return result;
+    } catch (e) {
+      console.error('Transfer error:', e);
+    }
+  };
+
+  // ── Update My Locations (post-patch bulk update) ──
+  const handleUpdateLocations = async (mode, storageLocation, homeLocation) => {
+    setLocationStatus('submitting');
+    try {
+      const result = await updateLocationsApi(mode, storageLocation, homeLocation, user);
+      if (result.success) {
+        setLocationResult(result);
+        setLocationStatus('success');
+        fetchItems();
+        setTimeout(() => setLocationStatus(null), 5000);
+      } else if (result.error === 'ACCESS_DENIED') {
+        setLocationStatus('denied');
+      } else if (result.error === 'RATE_LIMITED') {
+        setLocationStatus('ratelimited');
+        setTimeout(() => setLocationStatus(null), 4000);
+      } else {
+        setLocationStatus('error');
+        setTimeout(() => setLocationStatus(null), 3000);
+      }
+    } catch (e) {
+      setLocationStatus('error');
+      setTimeout(() => setLocationStatus(null), 3000);
+    }
+  };
+
+  // ── Fetch Metrics (admin-only) ──
+  const fetchMetrics = useCallback(async () => {
+    setMetricsLoading(true);
+    try {
+      const data = await fetchMetricsApi(user);
+      if (data.success) {
+        setMetrics(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch metrics:', e);
+    }
+    setMetricsLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (tab === 'metrics' && user?.isAdmin) {
+      fetchMetrics();
+    }
+  }, [tab, user, fetchMetrics]);
+
   const logout = () => {
     sessionStorage.removeItem('guild_user');
     setUser(null);
@@ -178,7 +256,7 @@ function App() {
     <div className="app">
       <Header />
       <UserBar user={user} onLogout={logout} />
-      <NavTabs tab={tab} setTab={setTab} />
+      <NavTabs tab={tab} setTab={setTab} user={user} />
 
       {tab === 'inventory' && (
         <InventoryTab
@@ -192,6 +270,8 @@ function App() {
           catCounts={catCounts}
           user={user}
           onDelete={handleDelete}
+          onConfirm={handleConfirmItem}
+          onTransfer={handleTransferItem}
         />
       )}
 
@@ -209,6 +289,18 @@ function App() {
 
       {tab === 'myitems' && (
         <MyItemsTab myItems={myItems} onDelete={handleDelete} />
+      )}
+
+      {tab === 'locations' && (
+        <UpdateLocationsTab
+          onUpdateLocations={handleUpdateLocations}
+          locationStatus={locationStatus}
+          locationResult={locationResult}
+        />
+      )}
+
+      {tab === 'metrics' && user.isAdmin && (
+        <MetricsTab metrics={metrics} metricsLoading={metricsLoading} />
       )}
     </div>
   );

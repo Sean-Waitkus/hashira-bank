@@ -13,7 +13,9 @@ function InventoryTab({
   setSearchQuery,
   catCounts,
   user,
-  onDelete
+  onDelete,
+  onConfirm,
+  onTransfer
 }) {
   return (
     <div className="fade-in">
@@ -75,33 +77,14 @@ function InventoryTab({
       ) : (
         <div className="item-grid">
           {filteredItems.map(item => (
-            <div key={item.id} className="item-card" data-cat={item.category}>
-              <div className="item-header">
-                <div className="item-name">{item.itemName}</div>
-                <div className="item-qty">×{item.quantity}</div>
-              </div>
-              <div className="item-category" style={{ color: CONFIG.CATEGORY_COLORS[item.category] }}>
-                {item.category}
-              </div>
-              {item.notes && <div className="item-notes">{item.notes}</div>}
-              <div className="item-meta">
-                <div className="item-contributor">
-                  ⬡ {item.contributor}
-                  {item.inGameName && (
-                    <span style={{ color: 'var(--text-dim)' }}> · IGN: {item.inGameName}</span>
-                  )}
-                </div>
-                <div className="item-date">{item.date}</div>
-              </div>
-              {/* Admin delete button on all items */}
-              {user.isAdmin && item.contributorId !== user.id && (
-                <div className="item-admin-delete">
-                  <button className="btn btn-small btn-danger" onClick={() => onDelete(item.id)}>
-                    Admin Remove
-                  </button>
-                </div>
-              )}
-            </div>
+            <ItemCard
+              key={item.id}
+              item={item}
+              user={user}
+              onDelete={onDelete}
+              onConfirm={onConfirm}
+              onTransfer={onTransfer}
+            />
           ))}
         </div>
       )}
