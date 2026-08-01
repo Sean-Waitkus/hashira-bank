@@ -583,7 +583,7 @@
     // ═══════════════════════════════════════════════════════
     const CONFIG = {
       // Google Apps Script web app URL (after deploying)
-      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzV9PdgpIkTVg9ph-Yyv2MV5Ts9yHawiUhS2GsN81KT0krP1ijzIjRDM-ZaUYmO-tvTZQ/exec',
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbymC1CjU2N0HxYWKYiMaF5YND62A2GW9Uw0_NjWE5H838l3WfIapvAaLcg4OvospqUGJg/exec',
 
       // Discord OAuth — Client ID only (secret stays on backend)
       DISCORD_CLIENT_ID: '1533142397758734356',
@@ -647,12 +647,10 @@
       const [items, setItems] = useState([]);
       const [itemsLoading, setItemsLoading] = useState(false);
       const [filterCategory, setFilterCategory] = useState('All');
-      const [formData, setFormData] = useState({
-        itemName: '',
-        category: CONFIG.CATEGORIES[0],
-        quantity: 1,
-        notes: ''
+      const emptyItemRow = () => ({
+        itemName: '', category: CONFIG.CATEGORIES[0], quantity: 1, notes: '', inGameName: ''
       });
+      const [batchItems, setBatchItems] = useState([emptyItemRow()]);
       const [formStatus, setFormStatus] = useState(null);
       const [searchQuery, setSearchQuery] = useState('');
 
@@ -706,12 +704,12 @@
       const fetchItems = useCallback(async () => {
         if (CONFIG.APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
           setItems([
-            { id: 1, itemName: 'Attrition-4 Laser Repeater', category: 'Ship Components', quantity: 3, notes: 'Size 4, great for Vanguard loadouts', contributor: 'DemoUser', contributorId: 'demo123', date: '2026-03-28' },
-            { id: 2, itemName: 'Pembroke Armor Set', category: 'FPS Weapons & Armor', quantity: 1, notes: 'Full EVA armor set, orange', contributor: 'Pilot_Alpha', contributorId: 'other456', date: '2026-03-28' },
-            { id: 3, itemName: 'Quantanium (Raw)', category: 'Mining/Salvage Materials', quantity: 12, notes: 'SCU units, stored at Lorville', contributor: 'MinerJoe', contributorId: 'other789', date: '2026-03-27' },
-            { id: 4, itemName: 'Medical Supplies', category: 'Commodities & Trade Goods', quantity: 50, notes: 'Bulk trade goods for profit runs', contributor: 'DemoUser', contributorId: 'demo123', date: '2026-03-27' },
-            { id: 5, itemName: 'FR-76 Shield Generator', category: 'Ship Components', quantity: 2, notes: 'Size 2, solid all-rounder', contributor: 'Pilot_Alpha', contributorId: 'other456', date: '2026-03-26' },
-            { id: 6, itemName: 'Salvage RMC', category: 'Mining/Salvage Materials', quantity: 8, notes: 'Recycled Material Composite from hull scraping', contributor: 'MinerJoe', contributorId: 'other789', date: '2026-03-26' },
+            { id: 1, itemName: 'Attrition-4 Laser Repeater', category: 'Ship Components', quantity: 3, notes: 'Size 4, great for Vanguard loadouts', contributor: 'DemoUser', contributorId: 'demo123', inGameName: 'Kael_Vance', date: '2026-03-28' },
+            { id: 2, itemName: 'Pembroke Armor Set', category: 'FPS Weapons & Armor', quantity: 1, notes: 'Full EVA armor set, orange', contributor: 'Pilot_Alpha', contributorId: 'other456', inGameName: '', date: '2026-03-28' },
+            { id: 3, itemName: 'Quantanium (Raw)', category: 'Mining/Salvage Materials', quantity: 12, notes: 'SCU units, stored at Lorville', contributor: 'MinerJoe', contributorId: 'other789', inGameName: 'DustRunner_77', date: '2026-03-27' },
+            { id: 4, itemName: 'Medical Supplies', category: 'Commodities & Trade Goods', quantity: 50, notes: 'Bulk trade goods for profit runs', contributor: 'DemoUser', contributorId: 'demo123', inGameName: 'Kael_Vance', date: '2026-03-27' },
+            { id: 5, itemName: 'FR-76 Shield Generator', category: 'Ship Components', quantity: 2, notes: 'Size 2, solid all-rounder', contributor: 'Pilot_Alpha', contributorId: 'other456', inGameName: '', date: '2026-03-26' },
+            { id: 6, itemName: 'Salvage RMC', category: 'Mining/Salvage Materials', quantity: 8, notes: 'Recycled Material Composite from hull scraping', contributor: 'MinerJoe', contributorId: 'other789', inGameName: 'DustRunner_77', date: '2026-03-26' },
           ]);
           return;
         }
@@ -739,22 +737,36 @@
       }, [user, fetchItems]);
 
       // ── Submit Item ──
+      const updateBatchRow = (index, field, value) => {
+        setBatchItems(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row));
+      };
+
+      const addBatchRow = () => {
+        setBatchItems(prev => [...prev, emptyItemRow()]);
+      };
+
+      const removeBatchRow = (index) => {
+        setBatchItems(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== index));
+      };
+
       const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.itemName.trim()) return;
+        const validRows = batchItems.filter(row => row.itemName.trim());
+        if (validRows.length === 0) return;
 
         setFormStatus('submitting');
 
         if (CONFIG.APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
-          const newItem = {
-            id: Date.now(),
-            ...formData,
+          const now = new Date().toISOString().split('T')[0];
+          const newItems = validRows.map(row => ({
+            id: Date.now() + Math.random(),
+            ...row,
             contributor: user.username,
             contributorId: user.id,
-            date: new Date().toISOString().split('T')[0]
-          };
-          setItems(prev => [newItem, ...prev]);
-          setFormData({ itemName: '', category: CONFIG.CATEGORIES[0], quantity: 1, notes: '' });
+            date: now
+          }));
+          setItems(prev => [...newItems, ...prev]);
+          setBatchItems([emptyItemRow()]);
           setFormStatus('success');
           setTimeout(() => setFormStatus(null), 3000);
           return;
@@ -765,15 +777,15 @@
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
-              action: 'addItem',
-              ...formData,
+              action: 'addItems',
+              items: validRows,
               contributor: user.displayName || user.username,
               userId: user.id
             })
           });
           const result = await res.json();
           if (result.success) {
-            setFormData({ itemName: '', category: CONFIG.CATEGORIES[0], quantity: 1, notes: '' });
+            setBatchItems([emptyItemRow()]);
             setFormStatus('success');
             fetchItems();
             setTimeout(() => setFormStatus(null), 3000);
@@ -827,7 +839,8 @@
         const matchesSearch = !searchQuery ||
           item.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.notes?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.contributor?.toLowerCase().includes(searchQuery.toLowerCase());
+          item.contributor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.inGameName?.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCat && matchesSearch;
       });
 
@@ -1018,7 +1031,12 @@
                       </div>
                       {item.notes && <div className="item-notes">{item.notes}</div>}
                       <div className="item-meta">
-                        <div className="item-contributor">⬡ {item.contributor}</div>
+                        <div className="item-contributor">
+                          ⬡ {item.contributor}
+                          {item.inGameName && (
+                            <span style={{ color: 'var(--text-dim)' }}> · IGN: {item.inGameName}</span>
+                          )}
+                        </div>
                         <div className="item-date">{item.date}</div>
                       </div>
                       {/* Admin delete button on all items */}
@@ -1039,57 +1057,101 @@
           {/* ── Submit Tab ── */}
           {tab === 'submit' && (
             <div className="fade-in">
-              <div className="form-panel">
-                <h2>⬡ Submit Item to Hashira-o7 Bank</h2>
+              <div className="form-panel" style={{ maxWidth: 760 }}>
+                <h2>⬡ Submit Items to Hashira-o7 Bank</h2>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '-12px', marginBottom: 20 }}>
+                  Submitting as <strong style={{ color: 'var(--accent)' }}>{user.displayName || user.username}</strong> (Discord). Add an in-game name below if it's different.
+                </p>
                 <form onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <label>Item Name</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g., Attrition-4 Laser Repeater"
-                      value={formData.itemName}
-                      onChange={e => setFormData({...formData, itemName: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Category</label>
-                      <select
-                        value={formData.category}
-                        onChange={e => setFormData({...formData, category: e.target.value})}
-                      >
-                        {CONFIG.CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                  {batchItems.map((row, index) => (
+                    <div key={index} style={{
+                      border: '1px solid var(--border-dim)',
+                      padding: 20,
+                      marginBottom: 16,
+                      position: 'relative',
+                      background: 'rgba(255,255,255,0.01)'
+                    }}>
+                      {batchItems.length > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            Item {index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-small btn-danger"
+                            onClick={() => removeBatchRow(index)}
+                          >
+                            Remove Row
+                          </button>
+                        </div>
+                      )}
+                      <div className="form-group">
+                        <label>Item Name</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g., Attrition-4 Laser Repeater"
+                          value={row.itemName}
+                          onChange={e => updateBatchRow(index, 'itemName', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Category</label>
+                          <select
+                            value={row.category}
+                            onChange={e => updateBatchRow(index, 'category', e.target.value)}
+                          >
+                            {CONFIG.CATEGORIES.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label>Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={row.quantity}
+                            onChange={e => updateBatchRow(index, 'quantity', parseInt(e.target.value) || 1)}
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>In-Game Name (optional)</label>
+                        <input
+                          type="text"
+                          placeholder="If different from your Discord name"
+                          value={row.inGameName}
+                          onChange={e => updateBatchRow(index, 'inGameName', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Notes (optional)</label>
+                        <textarea
+                          placeholder="Size, location, condition, etc."
+                          value={row.notes}
+                          onChange={e => updateBatchRow(index, 'notes', e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="form-group">
-                      <label>Quantity</label>
-                      <input
-                        type="number"
-                        min="1"
-                        required
-                        value={formData.quantity}
-                        onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 1})}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Notes (optional)</label>
-                    <textarea
-                      placeholder="Size, location, condition, etc."
-                      value={formData.notes}
-                      onChange={e => setFormData({...formData, notes: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-actions">
+                  ))}
+
+                  <div className="form-actions" style={{ justifyContent: 'space-between' }}>
+                    <button type="button" className="btn btn-small" onClick={addBatchRow}>
+                      + Add Another Item
+                    </button>
                     <button type="submit" className="btn" disabled={formStatus === 'submitting'}>
-                      {formStatus === 'submitting' ? 'Submitting...' : 'Submit to Bank'}
+                      {formStatus === 'submitting'
+                        ? 'Submitting...'
+                        : batchItems.length > 1
+                          ? `Submit ${batchItems.length} Items to Bank`
+                          : 'Submit to Bank'}
                     </button>
                   </div>
                   {formStatus === 'success' && (
-                    <div className="form-success">✓ Item submitted successfully</div>
+                    <div className="form-success">✓ Submitted successfully</div>
                   )}
                   {formStatus === 'error' && (
                     <div className="form-success" style={{borderColor: 'rgba(248,113,113,0.3)', color: 'var(--danger)', background: 'rgba(248,113,113,0.1)'}}>
@@ -1108,6 +1170,7 @@
                   )}
                 </form>
               </div>
+
             </div>
           )}
 
