@@ -6,7 +6,7 @@
 
 const CONFIG = {
   // Google Apps Script web app URL (after deploying)
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby07vuPYqIX04dwXJWYjz6ezbP7apBOx_NSyMkUjph-4WE7fEyo2vWvEVG_zv6vImk4ag/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxUBTtYYxWnqp1J_ejfkWT6cqkf2yV34yMjw5RMF7NJYFUs031JaA5pMjygu7t1mRfN5A/exec',
 
   // Discord OAuth — Client ID only (secret stays on backend)
   DISCORD_CLIENT_ID: '1533142397758734356',
