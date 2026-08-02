@@ -79,11 +79,9 @@ function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
             )}
           </div>
 
-          {item.contributorId !== user.id && (
-            <button className="btn btn-small btn-danger" onClick={() => onDelete(item.id)}>
-              Admin Remove
-            </button>
-          )}
+          <button className="btn btn-small btn-danger" onClick={() => onDelete(item.id)}>
+            {item.contributorId === user.id ? 'Remove' : 'Admin Remove'}
+          </button>
         </div>
       )}
     </div>
