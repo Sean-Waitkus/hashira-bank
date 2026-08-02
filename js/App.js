@@ -371,6 +371,7 @@ function App() {
 
       {tab === 'locations' && (
         <UpdateLocationsTab
+          user={user}
           onUpdateLocations={handleUpdateLocations}
           locationStatus={locationStatus}
           locationResult={locationResult}

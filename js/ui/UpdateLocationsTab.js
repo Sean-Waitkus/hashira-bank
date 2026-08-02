@@ -4,7 +4,7 @@
 // transferred to a bank admin are skipped automatically by the backend.
 // ═══════════════════════════════════════════════════════════════════
 
-function UpdateLocationsTab({ onUpdateLocations, locationStatus, locationResult }) {
+function UpdateLocationsTab({ user, onUpdateLocations, locationStatus, locationResult }) {
   const [mode, setMode] = React.useState('both');
   const [storageLocation, setStorageLocation] = React.useState('');
   const [homeLocation, setHomeLocation] = React.useState('');
@@ -38,6 +38,7 @@ function UpdateLocationsTab({ onUpdateLocations, locationStatus, locationResult 
                 value={storageLocation}
                 onChange={setStorageLocation}
                 placeholder="e.g., Area18 Storage"
+                user={user}
               />
             </div>
           )}
@@ -49,6 +50,7 @@ function UpdateLocationsTab({ onUpdateLocations, locationStatus, locationResult 
                 value={homeLocation}
                 onChange={setHomeLocation}
                 placeholder="e.g., Lorville"
+                user={user}
               />
             </div>
           )}

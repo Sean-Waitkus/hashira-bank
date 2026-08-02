@@ -15,7 +15,7 @@ function StatusBadge({ status }) {
   return (
     <span style={{
       fontFamily: 'var(--font-mono)',
-      fontSize: '0.6rem',
+      fontSize: '0.725rem',
       textTransform: 'uppercase',
       letterSpacing: '0.1em',
       padding: '2px 8px',

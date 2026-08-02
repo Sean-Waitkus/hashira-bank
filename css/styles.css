@@ -18,6 +18,7 @@
   --cat-fps: #f87171;
   --cat-mining: #fbbf24;
   --cat-commodities: #34d399;
+  --cat-auec: #2dd4bf;
   --cat-wikelo: #f472b6;
   --cat-other: #a78bfa;
   --font-display: 'Orbitron', sans-serif;
@@ -372,6 +373,7 @@ body {
 .item-card[data-cat="FPS Weapons & Armor"]::before { background: var(--cat-fps); }
 .item-card[data-cat="Mining/Salvage Materials"]::before { background: var(--cat-mining); }
 .item-card[data-cat="Commodities & Trade Goods"]::before { background: var(--cat-commodities); }
+.item-card[data-cat="aUEC"]::before { background: var(--cat-auec); }
 .item-card[data-cat="Wikelo"]::before { background: var(--cat-wikelo); }
 .item-card[data-cat="Other"]::before { background: var(--cat-other); }
 
@@ -383,14 +385,14 @@ body {
 }
 .item-name {
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.975rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--text-primary);
 }
 .item-qty {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.925rem;
   color: var(--accent);
   white-space: nowrap;
   padding: 2px 8px;
@@ -399,13 +401,13 @@ body {
 }
 .item-category {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.775rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   margin-bottom: 8px;
 }
 .item-notes {
-  font-size: 0.9rem;
+  font-size: 1.025rem;
   color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 12px;
@@ -419,12 +421,12 @@ body {
 }
 .item-contributor {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.825rem;
   color: var(--text-dim);
 }
 .item-date {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.825rem;
   color: var(--text-dim);
 }
 .item-admin-delete {

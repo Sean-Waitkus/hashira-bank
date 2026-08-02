@@ -92,6 +92,7 @@ function SubmitTab({
                     value={row.storageLocation}
                     onChange={val => updateBatchRow(index, 'storageLocation', val)}
                     placeholder="e.g., Stanton > Hurston > Lorville"
+                    user={user}
                   />
                 </div>
                 <div className="form-group">
@@ -100,6 +101,7 @@ function SubmitTab({
                     value={row.homeLocation}
                     onChange={val => updateBatchRow(index, 'homeLocation', val)}
                     placeholder="e.g., Stanton > microTech > New Babbage"
+                    user={user}
                   />
                 </div>
               </div>

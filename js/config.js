@@ -6,7 +6,7 @@
 
 const CONFIG = {
   // Google Apps Script web app URL (after deploying)
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyb1L2tHcq12P92VPndILrsoiB4hnhGG3XK1tj3pBbLWMJuceDqbM2fIDy8Zwm21AbNuw/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxylZelaJ1KMI5xdHj2BDRdksix3nsycJYW_0G8bYoJBtZGpyVHmRZPhhKS1y1WeTuVkw/exec',
 
   // Discord OAuth — Client ID only (secret stays on backend)
   DISCORD_CLIENT_ID: '1533142397758734356',
@@ -22,6 +22,7 @@ const CONFIG = {
     'FPS Weapons & Armor',
     'Mining/Salvage Materials',
     'Commodities & Trade Goods',
+    'aUEC',
     'Wikelo',
     'Other'
   ],
@@ -31,6 +32,7 @@ const CONFIG = {
     'FPS Weapons & Armor': '#f87171',
     'Mining/Salvage Materials': '#fbbf24',
     'Commodities & Trade Goods': '#34d399',
+    'aUEC': '#2dd4bf',
     'Wikelo': '#f472b6',
     'Other': '#a78bfa'
   }
