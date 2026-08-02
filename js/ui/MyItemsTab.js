@@ -3,13 +3,15 @@
 // remove any of their own items (regardless of admin status).
 // ═══════════════════════════════════════════════════════════════════
 
-function MyItemsTab({ myItems, onDelete }) {
+function MyItemsTab({ myItems, myItemsLoading, onDelete }) {
   return (
     <div className="fade-in">
       <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 20 }}>
         My Contributions
       </h2>
-      {myItems.length === 0 ? (
+      {myItemsLoading ? (
+        <div className="loading"><div className="spinner"></div>Loading your items...</div>
+      ) : myItems.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
           <p>You haven't contributed any items yet. Head to the Submit tab to add your first!</p>
