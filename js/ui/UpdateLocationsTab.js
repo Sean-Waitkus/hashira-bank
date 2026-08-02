@@ -34,12 +34,10 @@ function UpdateLocationsTab({ onUpdateLocations, locationStatus, locationResult 
           {(mode === 'items' || mode === 'both') && (
             <div className="form-group">
               <label>New Storage Location</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g., Area18 Storage"
+              <LocationAutocomplete
                 value={storageLocation}
-                onChange={e => setStorageLocation(e.target.value)}
+                onChange={setStorageLocation}
+                placeholder="e.g., Area18 Storage"
               />
             </div>
           )}
@@ -47,12 +45,10 @@ function UpdateLocationsTab({ onUpdateLocations, locationStatus, locationResult 
           {(mode === 'home' || mode === 'both') && (
             <div className="form-group">
               <label>New Home Location</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g., Lorville"
+              <LocationAutocomplete
                 value={homeLocation}
-                onChange={e => setHomeLocation(e.target.value)}
+                onChange={setHomeLocation}
+                placeholder="e.g., Lorville"
               />
             </div>
           )}

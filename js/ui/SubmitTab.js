@@ -85,6 +85,24 @@ function SubmitTab({
                   onChange={e => updateBatchRow(index, 'inGameName', e.target.value)}
                 />
               </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Storage Location (optional)</label>
+                  <LocationAutocomplete
+                    value={row.storageLocation}
+                    onChange={val => updateBatchRow(index, 'storageLocation', val)}
+                    placeholder="e.g., Stanton > Hurston > Lorville"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Your Home Location (optional)</label>
+                  <LocationAutocomplete
+                    value={row.homeLocation}
+                    onChange={val => updateBatchRow(index, 'homeLocation', val)}
+                    placeholder="e.g., Stanton > microTech > New Babbage"
+                  />
+                </div>
+              </div>
               <div className="form-group">
                 <label>Notes (optional)</label>
                 <textarea

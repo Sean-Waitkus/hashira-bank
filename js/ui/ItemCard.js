@@ -6,12 +6,17 @@
 // ═══════════════════════════════════════════════════════════════════
 
 function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
-  const [transferInput, setTransferInput] = React.useState(item.transferredTo || '');
   const [transferring, setTransferring] = React.useState(false);
 
-  const handleTransferClick = async () => {
+  const handleTakeCustody = async () => {
     setTransferring(true);
-    await onTransfer(item.id, transferInput);
+    await onTransfer(item.id, false);
+    setTransferring(false);
+  };
+
+  const handleRelease = async () => {
+    setTransferring(true);
+    await onTransfer(item.id, true);
     setTransferring(false);
   };
 
@@ -63,16 +68,15 @@ function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
           )}
 
           <div style={{ display: 'flex', gap: 6 }}>
-            <input
-              type="text"
-              placeholder="Transfer to admin..."
-              value={transferInput}
-              onChange={e => setTransferInput(e.target.value)}
-              style={{ flex: 1, fontSize: '0.8rem', padding: '6px 10px' }}
-            />
-            <button className="btn btn-small" onClick={handleTransferClick} disabled={transferring}>
-              {transferring ? '...' : 'Transfer'}
-            </button>
+            {item.transferredTo ? (
+              <button className="btn btn-small" onClick={handleRelease} disabled={transferring} style={{ flex: 1 }}>
+                {transferring ? '...' : 'Release Custody'}
+              </button>
+            ) : (
+              <button className="btn btn-small" onClick={handleTakeCustody} disabled={transferring} style={{ flex: 1 }}>
+                {transferring ? '...' : 'Take Custody'}
+              </button>
+            )}
           </div>
 
           {item.contributorId !== user.id && (

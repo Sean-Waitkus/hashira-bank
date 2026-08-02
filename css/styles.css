@@ -543,6 +543,8 @@ body {
 }
 .my-items-table tr:hover td { background: var(--bg-card-hover); }
 
+.location-suggestion:hover { background: var(--bg-card-hover); }
+
 @media (max-width: 640px) {
   .app { padding: 12px; }
   .form-row { grid-template-columns: 1fr; }

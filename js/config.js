@@ -6,11 +6,11 @@
 
 const CONFIG = {
   // Google Apps Script web app URL (after deploying)
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby07vuPYqIX04dwXJWYjz6ezbP7apBOx_NSyMkUjph-4WE7fEyo2vWvEVG_zv6vImk4ag/exec',
+  APPS_SCRIPT_URL: 'YOUR_APPS_SCRIPT_WEB_APP_URL',
 
   // Discord OAuth — Client ID only (secret stays on backend)
-  DISCORD_CLIENT_ID: '1533142397758734356',
-  DISCORD_REDIRECT_URI: 'https://sean-waitkus.github.io/hashira-bank/',
+  DISCORD_CLIENT_ID: 'YOUR_DISCORD_CLIENT_ID',
+  DISCORD_REDIRECT_URI: window.location.origin + window.location.pathname,
 
   // Your org name
   ORG_NAME: 'Hashira-o7',

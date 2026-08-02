@@ -17,7 +17,8 @@ function App() {
   const [itemsLoading, setItemsLoading] = useState(false);
   const [filterCategory, setFilterCategory] = useState('All');
   const emptyItemRow = () => ({
-    itemName: '', category: CONFIG.CATEGORIES[0], quantity: 1, notes: '', inGameName: ''
+    itemName: '', category: CONFIG.CATEGORIES[0], quantity: 1, notes: '', inGameName: '',
+    storageLocation: '', homeLocation: ''
   });
   const [batchItems, setBatchItems] = useState([emptyItemRow()]);
   const [formStatus, setFormStatus] = useState(null);
@@ -152,10 +153,10 @@ function App() {
     }
   };
 
-  // ── Transfer Item Custody (admin-only) ──
-  const handleTransferItem = async (itemId, transferredTo) => {
+  // ── Transfer Item Custody (admin-only, self-service — see Query_TransferItem.gs) ──
+  const handleTransferItem = async (itemId, release) => {
     try {
-      const result = await transferItemApi(itemId, transferredTo, user);
+      const result = await transferItemApi(itemId, release, user);
       if (result.success) {
         fetchItems();
       } else if (result.message) {
