@@ -1,19 +1,17 @@
 // ═══════════════════════════════════════════════════════════════════
-// QUERY: reorderGoals — Admin-only: sets goal priority order, and
-// (when swappedGoalIdA/B are given) triggers auto-reallocation of any
-// shared item type between the two goals that just traded places.
-// Mirrors Query_ReorderGoals.gs.
+// QUERY: transferGoalContribution — Admin-only: moves a confirmed
+// item's credit from one goal to another that needs the same item.
+// Mirrors Query_TransferGoalContribution.gs.
 // ═══════════════════════════════════════════════════════════════════
 
-async function reorderGoalsApi(orderedIds, swappedGoalIdA, swappedGoalIdB, user) {
+async function transferGoalContributionApi(inventoryItemId, targetGoalItemId, user) {
   const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({
-      action: 'reorderGoals',
-      orderedIds: orderedIds,
-      swappedGoalIdA: swappedGoalIdA,
-      swappedGoalIdB: swappedGoalIdB,
+      action: 'transferGoalContribution',
+      inventoryItemId: inventoryItemId,
+      targetGoalItemId: targetGoalItemId,
       userId: user.id,
       accessToken: user.accessToken
     })

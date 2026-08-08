@@ -11,9 +11,9 @@ function GoalsTab({
   expandedGoalId,
   onToggleExpand,
   user,
-  onContribute,
   onArchive,
   onReorder,
+  onTransferGoalContribution,
   showCreateForm,
   setShowCreateForm,
   onCreateGoal,
@@ -26,7 +26,9 @@ function GoalsTab({
     const tmp = reordered[index];
     reordered[index] = reordered[swapWith];
     reordered[swapWith] = tmp;
-    onReorder(reordered.map(g => g.id));
+    // We know exactly which two goals traded places — pass both IDs
+    // so the backend can auto-reallocate shared items between them.
+    onReorder(reordered.map(g => g.id), goals[index].id, goals[swapWith].id);
   };
 
   return (
@@ -65,12 +67,13 @@ function GoalsTab({
             isExpanded={goal.id === expandedGoalId}
             onToggle={() => onToggleExpand(goal.id)}
             user={user}
-            onContribute={onContribute}
+            allGoals={goals}
             onArchive={onArchive}
             onMoveUp={() => handleMove(index, -1)}
             onMoveDown={() => handleMove(index, 1)}
             isFirst={index === 0}
             isLast={index === goals.length - 1}
+            onTransferGoalContribution={onTransferGoalContribution}
           />
         ))
       )}

@@ -4,7 +4,7 @@
 // contribute controls, and admin-only controls (reorder, archive).
 // ═══════════════════════════════════════════════════════════════════
 
-function GoalCard({ goal, isExpanded, onToggle, user, onContribute, onArchive, onMoveUp, onMoveDown, isFirst, isLast }) {
+function GoalCard({ goal, isExpanded, onToggle, user, allGoals, onArchive, onMoveUp, onMoveDown, isFirst, isLast, onTransferGoalContribution }) {
   const overall = goal.overallProgress;
   const percent = overall.percent;
   const isComplete = goal.status === 'Completed';
@@ -42,13 +42,20 @@ function GoalCard({ goal, isExpanded, onToggle, user, onContribute, onArchive, o
             <p style={{ color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>{goal.description}</p>
           )}
 
+          {goal.status === 'Active' && (
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: 20 }}>
+              💡 To contribute, mark an item for this goal on the <strong>Submit Item</strong> tab. It counts toward progress once an admin takes custody of it.
+            </p>
+          )}
+
           {goal.items.map(item => (
             <GoalItemRow
               key={item.id}
               goalId={goal.id}
               item={item}
-              onContribute={onContribute}
-              goalIsActive={goal.status === 'Active'}
+              user={user}
+              allGoals={allGoals}
+              onTransferGoalContribution={onTransferGoalContribution}
             />
           ))}
 

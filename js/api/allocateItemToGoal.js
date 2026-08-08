@@ -1,19 +1,17 @@
 // ═══════════════════════════════════════════════════════════════════
-// QUERY: reorderGoals — Admin-only: sets goal priority order, and
-// (when swappedGoalIdA/B are given) triggers auto-reallocation of any
-// shared item type between the two goals that just traded places.
-// Mirrors Query_ReorderGoals.gs.
+// QUERY: allocateItemToGoal — Admin-only: links a general inventory
+// item to a goal need, or clears an existing link (pass an empty
+// targetGoalItemId). Mirrors Query_AllocateItemToGoal.gs.
 // ═══════════════════════════════════════════════════════════════════
 
-async function reorderGoalsApi(orderedIds, swappedGoalIdA, swappedGoalIdB, user) {
+async function allocateItemToGoalApi(inventoryItemId, targetGoalItemId, user) {
   const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({
-      action: 'reorderGoals',
-      orderedIds: orderedIds,
-      swappedGoalIdA: swappedGoalIdA,
-      swappedGoalIdB: swappedGoalIdB,
+      action: 'allocateItemToGoal',
+      inventoryItemId: inventoryItemId,
+      targetGoalItemId: targetGoalItemId || '',
       userId: user.id,
       accessToken: user.accessToken
     })

@@ -18,9 +18,11 @@ function InventoryTab({
   searchQuery,
   onSearchChange,
   user,
+  allGoals,
   onDelete,
   onConfirm,
-  onTransfer
+  onTransfer,
+  onAllocateToGoal
 }) {
   return (
     <div className="fade-in">
@@ -87,9 +89,11 @@ function InventoryTab({
                 key={item.id}
                 item={item}
                 user={user}
+                allGoals={allGoals}
                 onDelete={onDelete}
                 onConfirm={onConfirm}
                 onTransfer={onTransfer}
+                onAllocateToGoal={onAllocateToGoal}
               />
             ))}
           </div>

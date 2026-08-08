@@ -1,12 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════
 // UI: ItemCard — a single inventory item, including admin-only
-// controls (confirm, transfer custody, remove). Uses React.useState
-// directly (not a bare useState) so it doesn't depend on script load
-// order relative to App.js's destructured hooks.
+// controls (confirm, transfer custody, remove, allocate to a goal).
+// Uses React.useState directly (not a bare useState) so it doesn't
+// depend on script load order relative to App.js's destructured hooks.
 // ═══════════════════════════════════════════════════════════════════
 
-function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
+function ItemCard({ item, user, allGoals, onDelete, onConfirm, onTransfer, onAllocateToGoal }) {
   const [transferring, setTransferring] = React.useState(false);
+  const [showAllocate, setShowAllocate] = React.useState(false);
+  const [allocateSelection, setAllocateSelection] = React.useState('');
+  const [allocating, setAllocating] = React.useState(false);
 
   // Local mirror of the "Transferred To" value, so the card updates the
   // instant a transfer succeeds — using the admin name the BACKEND
@@ -38,7 +41,36 @@ function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
     setTransferring(false);
   };
 
+  const handleAllocate = async () => {
+    if (!allocateSelection) return;
+    setAllocating(true);
+    await onAllocateToGoal(item.id, allocateSelection);
+    setAllocating(false);
+    setShowAllocate(false);
+    setAllocateSelection('');
+  };
+
+  const handleUnlink = async () => {
+    setAllocating(true);
+    await onAllocateToGoal(item.id, '');
+    setAllocating(false);
+  };
+
   const isOwnItem = item.contributorId === user.id;
+
+  // Options for the allocate dropdown: every needed item across all
+  // active (non-archived) goals that still needs more. No item-name
+  // matching required here — the admin is making a direct judgment
+  // call about which bank item fulfills which need.
+  const allocateOptions = [];
+  (allGoals || []).forEach(g => {
+    if (g.status === 'Archived') return;
+    (g.items || []).forEach(it => {
+      const remaining = Math.max(0, (Number(it.quantityNeeded) || 0) - (Number(it.quantityContributed) || 0));
+      if (remaining <= 0) return;
+      allocateOptions.push({ goalItemId: it.id, goalTitle: g.title, itemName: it.itemName, remaining });
+    });
+  });
 
   return (
     <div className="item-card" data-cat={item.category}>
@@ -55,6 +87,18 @@ function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
       </div>
 
       {item.notes && <div className="item-notes">{item.notes}</div>}
+
+      {item.goalInfo && (
+        localTransferredTo ? (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--success)', marginBottom: 8 }}>
+            ✓ Counted toward: {item.goalInfo.goalTitle} — {item.goalInfo.itemName}
+          </div>
+        ) : (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent)', marginBottom: 8 }}>
+            🎯 Pledged toward: {item.goalInfo.goalTitle} — {item.goalInfo.itemName} (awaiting admin custody)
+          </div>
+        )
+      )}
 
       {(item.storageLocation || item.homeLocation) && (
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.825rem', color: 'var(--text-dim)', marginBottom: 8, lineHeight: 1.6 }}>
@@ -99,6 +143,44 @@ function ItemCard({ item, user, onDelete, onConfirm, onTransfer }) {
               ) : (
                 <button className="btn btn-small" onClick={handleTakeCustody} disabled={transferring} style={{ flex: 1 }}>
                   {transferring ? '...' : 'Take Custody'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Allocate general (unlinked) inventory to a goal, or unlink
+              an already-allocated item — symmetric with the other
+              admin goal controls elsewhere in the app. */}
+          {item.goalInfo ? (
+            <button className="btn btn-small" onClick={handleUnlink} disabled={allocating}>
+              {allocating ? '...' : 'Unlink from Goal'}
+            </button>
+          ) : allocateOptions.length > 0 && (
+            <div>
+              {showAllocate ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select
+                    value={allocateSelection}
+                    onChange={e => setAllocateSelection(e.target.value)}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="">Select a goal need...</option>
+                    {allocateOptions.map(o => (
+                      <option key={o.goalItemId} value={o.goalItemId}>
+                        {o.goalTitle} — {o.itemName} ({o.remaining} needed)
+                      </option>
+                    ))}
+                  </select>
+                  <button className="btn btn-small" disabled={!allocateSelection || allocating} onClick={handleAllocate}>
+                    {allocating ? '...' : 'Confirm'}
+                  </button>
+                  <button className="btn btn-small btn-danger" onClick={() => setShowAllocate(false)}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button className="btn btn-small" onClick={() => setShowAllocate(true)}>
+                  Allocate to Goal
                 </button>
               )}
             </div>

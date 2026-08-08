@@ -46,7 +46,7 @@ function App() {
   // ── Submit form ──
   const emptyItemRow = () => ({
     itemName: '', category: CONFIG.CATEGORIES[0], quantity: 1, notes: '', inGameName: '',
-    storageLocation: '', homeLocation: ''
+    storageLocation: '', homeLocation: '', goalItemId: ''
   });
   const [batchItems, setBatchItems] = useState([emptyItemRow()]);
   const [formStatus, setFormStatus] = useState(null);
@@ -250,7 +250,10 @@ function App() {
   };
 
   // ── Transfer Item Custody — local-only update ──
-  // (admin-only, self-service — see Query_TransferItem.gs)
+  // (admin-only, self-service — see Query_TransferItem.gs). If the
+  // item is linked to a goal, taking custody credits it and releasing
+  // reverses that credit — see the goalCredited/goalReversed handling
+  // below for the friendly heads-up on either outcome.
   const handleTransferItem = async (itemId, release) => {
     try {
       const result = await transferItemApi(itemId, release, user);
@@ -258,6 +261,52 @@ function App() {
         const transferredTo = result.transferredTo || '';
         setItems(prev => prev.map(i => i.id === itemId ? { ...i, transferredTo } : i));
         setMyItems(prev => prev.map(i => i.id === itemId ? { ...i, transferredTo } : i));
+
+        // If this item is linked to a goal, patch that goal's progress
+        // locally too — the transfer response doesn't echo the goal/item
+        // IDs back, but we already have them on the item itself from the
+        // last fetch.
+        const sourceItem = items.find(i => i.id === itemId) || myItems.find(i => i.id === itemId);
+        const linkedGoalItemId = sourceItem?.goalItemId;
+
+        if (linkedGoalItemId && (result.goalCredited > 0 || result.goalReversed > 0)) {
+          const delta = result.goalCredited > 0 ? result.goalCredited : -result.goalReversed;
+          setGoals(prev => prev.map(g => {
+            const matchIdx = g.items.findIndex(it => it.id === linkedGoalItemId);
+            if (matchIdx === -1) return g;
+
+            const newItems = g.items.map((it, idx) => idx === matchIdx
+              ? { ...it, quantityContributed: Math.max(0, (Number(it.quantityContributed) || 0) + delta) }
+              : it);
+            const totalNeeded = newItems.reduce((sum, it) => sum + (Number(it.quantityNeeded) || 0), 0);
+            const totalContributed = newItems.reduce((sum, it) => {
+              const needed = Number(it.quantityNeeded) || 0;
+              return sum + Math.min(Number(it.quantityContributed) || 0, needed);
+            }, 0);
+
+            let newStatus = g.status;
+            if (result.goalCompleted) newStatus = 'Completed';
+            if (result.goalReverted) newStatus = 'Active';
+
+            return {
+              ...g,
+              status: newStatus,
+              items: newItems,
+              overallProgress: {
+                needed: totalNeeded,
+                contributed: totalContributed,
+                percent: totalNeeded > 0 ? Math.min(100, Math.round((totalContributed / totalNeeded) * 100)) : 0
+              }
+            };
+          }));
+        }
+
+        if (result.goalCredited > 0) {
+          alert(`✓ Custody taken — ${result.goalCredited} counted toward the linked community goal.${result.goalCompleted ? ' 🎉 That completed the goal!' : ''}`);
+        }
+        if (result.goalReversed > 0) {
+          alert(`Custody released — ${result.goalReversed} reversed from the linked community goal.${result.goalReverted ? ' The goal is back to Active since it\'s no longer fully funded.' : ''}`);
+        }
       } else if (result.message) {
         alert(result.message);
       }
@@ -374,62 +423,101 @@ function App() {
   };
 
   // Reordering is optimistic — we already know the new order locally
-  // (the admin just built it by clicking arrows), so update immediately
-  // and let the API call catch up in the background.
-  const handleReorderGoals = async (orderedIds) => {
+  // (the admin just built it by clicking arrows), so update the order
+  // immediately and let the API call catch up in the background.
+  // If this swap triggers an auto-reallocation of shared items between
+  // the two goals involved (see Query_ReorderGoals.gs), a full goals
+  // refetch follows so both goals' totals and linked items are current.
+  const handleReorderGoals = async (orderedIds, swappedGoalIdA, swappedGoalIdB) => {
     setGoals(prev => {
       const byId = {};
       prev.forEach(g => { byId[g.id] = g; });
       return orderedIds.map(id => byId[id]).filter(Boolean);
     });
     try {
-      const result = await reorderGoalsApi(orderedIds, user);
+      const result = await reorderGoalsApi(orderedIds, swappedGoalIdA, swappedGoalIdB, user);
       if (!result.success && result.message) {
         alert(result.message);
+        return;
+      }
+      if (result.reallocation && result.reallocation.movedCount > 0) {
+        const r = result.reallocation;
+        const itemsSummary = r.items.map(m => `${m.quantity} × ${m.itemName}`).join(', ');
+        alert(`🔄 Priorities swapped — auto-reallocated toward the promoted goal: ${itemsSummary}`);
+        fetchGoals();
       }
     } catch (e) {
       console.error('Reorder goals error:', e);
     }
   };
 
-  // Contributing patches just the affected goal/item locally.
-  const handleContributeToGoal = async (goalId, goalItemId, quantity) => {
+  // Transferring a confirmed item's contribution between goals touches
+  // TWO goals' aggregate totals and linked-item lists at once, so this
+  // refetches goals rather than trying to patch both locally. The
+  // moved item's goalInfo IS patched locally in items/myItems though,
+  // since we know exactly where it went from the response.
+  const handleTransferGoalContribution = async (inventoryItemId, targetGoalItemId) => {
     try {
-      const result = await contributeToGoalApi(goalId, goalItemId, quantity, user);
+      const result = await transferGoalContributionApi(inventoryItemId, targetGoalItemId, user);
       if (result.success) {
-        setGoals(prev => prev.map(g => {
-          if (g.id !== goalId) return g;
-          const newItems = g.items.map(it => it.id === goalItemId
-            ? { ...it, quantityContributed: result.quantityContributed }
-            : it);
-          const totalNeeded = newItems.reduce((sum, it) => sum + (Number(it.quantityNeeded) || 0), 0);
-          const totalContributed = newItems.reduce((sum, it) => {
-            const needed = Number(it.quantityNeeded) || 0;
-            return sum + Math.min(Number(it.quantityContributed) || 0, needed);
-          }, 0);
-          return {
-            ...g,
-            status: result.goalCompleted ? 'Completed' : g.status,
-            items: newItems,
-            overallProgress: {
-              needed: totalNeeded,
-              contributed: totalContributed,
-              percent: totalNeeded > 0 ? Math.min(100, Math.round((totalContributed / totalNeeded) * 100)) : 0
-            }
-          };
-        }));
-        if (result.capped) {
-          alert(`Only ${result.accepted} was still needed and has been recorded (you offered ${result.requested}).`);
-        }
-        if (result.goalCompleted) {
-          alert('🎉 That contribution completed the goal!');
+        const newGoalInfo = { goalId: result.targetGoalId, goalTitle: result.targetGoalTitle, itemName: result.itemName };
+        setItems(prev => prev.map(i => i.id === inventoryItemId
+          ? { ...i, goalItemId: result.targetGoalItemId, goalInfo: newGoalInfo }
+          : i));
+        setMyItems(prev => prev.map(i => i.id === inventoryItemId
+          ? { ...i, goalItemId: result.targetGoalItemId, goalInfo: newGoalInfo }
+          : i));
+
+        fetchGoals();
+
+        let msg = `✓ Moved ${result.quantity} × ${result.itemName} from "${result.sourceGoalTitle}" to "${result.targetGoalTitle}".`;
+        if (result.targetCompleted) msg += ' 🎉 That completed the target goal!';
+        if (result.sourceReverted) msg += ' The source goal is back to Active since it\'s no longer fully funded.';
+        alert(msg);
+      } else if (result.message) {
+        alert(result.message);
+      }
+    } catch (e) {
+      console.error('Transfer goal contribution error:', e);
+    }
+  };
+
+  // Allocates a general (unlinked) inventory item to a goal need, or
+  // clears an existing link. If custody is already confirmed, linking
+  // credits the goal immediately — see Query_AllocateItemToGoal.gs.
+  const handleAllocateToGoal = async (inventoryItemId, targetGoalItemId) => {
+    try {
+      const result = await allocateItemToGoalApi(inventoryItemId, targetGoalItemId, user);
+      if (result.success) {
+        if (result.linked) {
+          const newGoalInfo = { goalId: result.targetGoalId, goalTitle: result.targetGoalTitle, itemName: result.itemName };
+          setItems(prev => prev.map(i => i.id === inventoryItemId
+            ? { ...i, goalItemId: result.targetGoalItemId, goalInfo: newGoalInfo }
+            : i));
+          setMyItems(prev => prev.map(i => i.id === inventoryItemId
+            ? { ...i, goalItemId: result.targetGoalItemId, goalInfo: newGoalInfo }
+            : i));
+
+          if (result.credited > 0) {
+            fetchGoals();
+            alert(`✓ Allocated ${result.credited} × ${result.itemName} toward "${result.targetGoalTitle}".${result.goalCompleted ? ' 🎉 That completed the goal!' : ''}`);
+          } else {
+            alert(`Linked to "${result.targetGoalTitle}" — will count once custody is taken.`);
+          }
+        } else if (result.cleared) {
+          setItems(prev => prev.map(i => i.id === inventoryItemId ? { ...i, goalItemId: '', goalInfo: null } : i));
+          setMyItems(prev => prev.map(i => i.id === inventoryItemId ? { ...i, goalItemId: '', goalInfo: null } : i));
+
+          if (result.reversedAmount > 0) {
+            fetchGoals();
+            alert(`Unlinked from goal — ${result.reversedAmount} reversed.${result.goalReverted ? ' The goal is back to Active since it\'s no longer fully funded.' : ''}`);
+          }
         }
       } else if (result.message) {
         alert(result.message);
       }
-      return result;
     } catch (e) {
-      console.error('Contribute to goal error:', e);
+      console.error('Allocate to goal error:', e);
     }
   };
 
@@ -468,9 +556,9 @@ function App() {
           expandedGoalId={expandedGoalId}
           onToggleExpand={handleToggleExpandGoal}
           user={user}
-          onContribute={handleContributeToGoal}
           onArchive={handleArchiveGoal}
           onReorder={handleReorderGoals}
+          onTransferGoalContribution={handleTransferGoalContribution}
           showCreateForm={showCreateGoalForm}
           setShowCreateForm={setShowCreateGoalForm}
           onCreateGoal={handleCreateGoal}
@@ -491,15 +579,18 @@ function App() {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           user={user}
+          allGoals={goals}
           onDelete={handleDelete}
           onConfirm={handleConfirmItem}
           onTransfer={handleTransferItem}
+          onAllocateToGoal={handleAllocateToGoal}
         />
       )}
 
       {tab === 'submit' && (
         <SubmitTab
           user={user}
+          goals={goals}
           batchItems={batchItems}
           updateBatchRow={updateBatchRow}
           addBatchRow={addBatchRow}

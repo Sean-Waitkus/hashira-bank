@@ -5,6 +5,7 @@
 
 function SubmitTab({
   user,
+  goals,
   batchItems,
   updateBatchRow,
   addBatchRow,
@@ -12,6 +13,16 @@ function SubmitTab({
   handleSubmit,
   formStatus
 }) {
+  // Only offer goals that are still open and have at least one
+  // eligible (not-yet-fully-funded) item to link to.
+  const eligibleGoals = (goals || [])
+    .filter(g => g.status === 'Active')
+    .map(g => ({
+      ...g,
+      items: g.items.filter(it => (Number(it.quantityNeeded) || 0) - (Number(it.quantityContributed) || 0) > 0)
+    }))
+    .filter(g => g.items.length > 0);
+
   return (
     <div className="fade-in">
       <div className="form-panel" style={{ maxWidth: 760 }}>
@@ -52,6 +63,34 @@ function SubmitTab({
                   onChange={e => updateBatchRow(index, 'itemName', e.target.value)}
                 />
               </div>
+              {eligibleGoals.length > 0 && (
+                <div className="form-group">
+                  <label>Contribute to Community Goal (optional)</label>
+                  <select
+                    value={row.goalItemId}
+                    onChange={e => updateBatchRow(index, 'goalItemId', e.target.value)}
+                  >
+                    <option value="">— General bank inventory —</option>
+                    {eligibleGoals.map(goal => (
+                      <optgroup label={goal.title} key={goal.id}>
+                        {goal.items.map(it => {
+                          const remaining = (Number(it.quantityNeeded) || 0) - (Number(it.quantityContributed) || 0);
+                          return (
+                            <option key={it.id} value={it.id}>
+                              {it.itemName} — {remaining} still needed
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    ))}
+                  </select>
+                  {row.goalItemId && (
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: 6 }}>
+                      This won't count toward the goal until an admin takes custody of it.
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="form-row">
                 <div className="form-group">
                   <label>Category</label>
