@@ -4,7 +4,7 @@
 // following the same row-based pattern as the item Submit form.
 // ═══════════════════════════════════════════════════════════════════
 
-function GoalCreateForm({ onCreate, onCancel, createStatus }) {
+function GoalCreateForm({ user, onCreate, onCancel, createStatus }) {
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const emptyRow = () => ({ itemName: '', category: CONFIG.CATEGORIES[0], quantityNeeded: 1 });
@@ -66,12 +66,11 @@ function GoalCreateForm({ onCreate, onCancel, createStatus }) {
             <div className="form-row">
               <div className="form-group">
                 <label>Item Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., Titanium"
+                <ItemAutocomplete
                   value={row.itemName}
-                  onChange={e => updateRow(i, 'itemName', e.target.value)}
+                  onChange={val => updateRow(i, 'itemName', val)}
+                  placeholder="e.g., Titanium"
+                  user={user}
                 />
               </div>
               <div className="form-group">

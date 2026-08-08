@@ -46,6 +46,7 @@ function GoalsTab({
 
       {showCreateForm && (
         <GoalCreateForm
+          user={user}
           onCreate={onCreateGoal}
           onCancel={() => setShowCreateForm(false)}
           createStatus={createStatus}

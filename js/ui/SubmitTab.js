@@ -55,12 +55,11 @@ function SubmitTab({
               )}
               <div className="form-group">
                 <label>Item Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., Attrition-4 Laser Repeater"
+                <ItemAutocomplete
                   value={row.itemName}
-                  onChange={e => updateBatchRow(index, 'itemName', e.target.value)}
+                  onChange={val => updateBatchRow(index, 'itemName', val)}
+                  placeholder="e.g., Attrition-4 Laser Repeater"
+                  user={user}
                 />
               </div>
               {eligibleGoals.length > 0 && (
