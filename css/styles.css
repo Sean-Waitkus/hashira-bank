@@ -547,6 +547,79 @@ body {
 
 .location-suggestion:hover { background: var(--bg-card-hover); }
 
+/* ── Community Goals ── */
+.goal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.goal-card:hover {
+  border-color: var(--border-glow);
+}
+.goal-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 22px;
+  cursor: pointer;
+}
+.goal-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.goal-complete-badge {
+  display: inline-block;
+  margin-left: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--success);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.1);
+  padding: 2px 8px;
+  vertical-align: middle;
+}
+.goal-priority-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.goal-priority-controls .btn {
+  padding: 2px 10px;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+.goal-expand-icon {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text-dim);
+  width: 24px;
+  text-align: center;
+}
+.goal-body {
+  padding: 4px 22px 22px;
+  border-top: 1px solid var(--border-dim);
+  padding-top: 20px;
+}
+
+.progress-track {
+  background: rgba(255, 255, 255, 0.05);
+  height: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  height: 100%;
+  transition: width 0.4s ease;
+}
+.progress-fill.complete {
+  background: linear-gradient(90deg, var(--success), #6ee7b7);
+}
+
 @media (max-width: 640px) {
   .app { padding: 12px; }
   .form-row { grid-template-columns: 1fr; }

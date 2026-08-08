@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════
 // App — Top-level component. Holds all state and handlers, and
 // delegates rendering to the UI components (Header, LoginScreen,
-// ErrorScreen, UserBar, NavTabs, InventoryTab, SubmitTab, MyItemsTab,
-// UpdateLocationsTab, MetricsTab) and data calls to the API files.
+// ErrorScreen, UserBar, NavTabs, GoalsTab, InventoryTab, SubmitTab,
+// MyItemsTab, UpdateLocationsTab, MetricsTab) and data calls to the
+// API files.
 //
 // NOTE on data freshness strategy:
 // - Inventory is paginated + filtered/searched SERVER-SIDE (see
@@ -25,7 +26,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [tab, setTab] = useState('inventory');
+  const [tab, setTab] = useState('goals');
 
   // ── Inventory (paginated) ──
   const [items, setItems] = useState([]);
@@ -57,6 +58,13 @@ function App() {
   // ── Metrics (admin-only) ──
   const [metrics, setMetrics] = useState(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // ── Community Goals (front page) ──
+  const [goals, setGoals] = useState([]);
+  const [goalsLoading, setGoalsLoading] = useState(false);
+  const [expandedGoalId, setExpandedGoalId] = useState(null); // only one open at a time
+  const [showCreateGoalForm, setShowCreateGoalForm] = useState(false);
+  const [createGoalStatus, setCreateGoalStatus] = useState(null);
 
   // ── Auth Flow ──
   useEffect(() => {
@@ -306,6 +314,125 @@ function App() {
     }
   }, [tab, user, fetchMetrics]);
 
+  // ── Fetch Community Goals (front page) ──
+  const fetchGoals = useCallback(async () => {
+    setGoalsLoading(true);
+    try {
+      const data = await fetchGoalsApi(user);
+      if (data.success) {
+        setGoals(data.goals || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch goals:', e);
+    }
+    setGoalsLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (tab === 'goals' && user) {
+      fetchGoals();
+    }
+  }, [tab, user, fetchGoals]);
+
+  const handleToggleExpandGoal = (goalId) => {
+    setExpandedGoalId(prev => prev === goalId ? null : goalId);
+  };
+
+  // Creating a goal changes ordering (new goal appends to the end), so
+  // this refetches rather than trying to patch locally.
+  const handleCreateGoal = async (title, description, items) => {
+    setCreateGoalStatus('submitting');
+    try {
+      const result = await createGoalApi(title, description, items, user);
+      if (result.success) {
+        setGoals(prev => [...prev, result.goal]);
+        setShowCreateGoalForm(false);
+        setCreateGoalStatus(null);
+      } else {
+        setCreateGoalStatus('error');
+        setTimeout(() => setCreateGoalStatus(null), 3000);
+      }
+    } catch (e) {
+      setCreateGoalStatus('error');
+      setTimeout(() => setCreateGoalStatus(null), 3000);
+    }
+  };
+
+  // Archiving is local-only — just remove it from the visible list.
+  const handleArchiveGoal = async (goalId) => {
+    try {
+      const result = await archiveGoalApi(goalId, user);
+      if (result.success) {
+        setGoals(prev => prev.filter(g => g.id !== goalId));
+        setExpandedGoalId(prev => prev === goalId ? null : prev);
+      } else if (result.message) {
+        alert(result.message);
+      }
+    } catch (e) {
+      console.error('Archive goal error:', e);
+    }
+  };
+
+  // Reordering is optimistic — we already know the new order locally
+  // (the admin just built it by clicking arrows), so update immediately
+  // and let the API call catch up in the background.
+  const handleReorderGoals = async (orderedIds) => {
+    setGoals(prev => {
+      const byId = {};
+      prev.forEach(g => { byId[g.id] = g; });
+      return orderedIds.map(id => byId[id]).filter(Boolean);
+    });
+    try {
+      const result = await reorderGoalsApi(orderedIds, user);
+      if (!result.success && result.message) {
+        alert(result.message);
+      }
+    } catch (e) {
+      console.error('Reorder goals error:', e);
+    }
+  };
+
+  // Contributing patches just the affected goal/item locally.
+  const handleContributeToGoal = async (goalId, goalItemId, quantity) => {
+    try {
+      const result = await contributeToGoalApi(goalId, goalItemId, quantity, user);
+      if (result.success) {
+        setGoals(prev => prev.map(g => {
+          if (g.id !== goalId) return g;
+          const newItems = g.items.map(it => it.id === goalItemId
+            ? { ...it, quantityContributed: result.quantityContributed }
+            : it);
+          const totalNeeded = newItems.reduce((sum, it) => sum + (Number(it.quantityNeeded) || 0), 0);
+          const totalContributed = newItems.reduce((sum, it) => {
+            const needed = Number(it.quantityNeeded) || 0;
+            return sum + Math.min(Number(it.quantityContributed) || 0, needed);
+          }, 0);
+          return {
+            ...g,
+            status: result.goalCompleted ? 'Completed' : g.status,
+            items: newItems,
+            overallProgress: {
+              needed: totalNeeded,
+              contributed: totalContributed,
+              percent: totalNeeded > 0 ? Math.min(100, Math.round((totalContributed / totalNeeded) * 100)) : 0
+            }
+          };
+        }));
+        if (result.capped) {
+          alert(`Only ${result.accepted} was still needed and has been recorded (you offered ${result.requested}).`);
+        }
+        if (result.goalCompleted) {
+          alert('🎉 That contribution completed the goal!');
+        }
+      } else if (result.message) {
+        alert(result.message);
+      }
+      return result;
+    } catch (e) {
+      console.error('Contribute to goal error:', e);
+    }
+  };
+
   const logout = () => {
     sessionStorage.removeItem('guild_user');
     setUser(null);
@@ -333,6 +460,23 @@ function App() {
       <Header />
       <UserBar user={user} onLogout={logout} />
       <NavTabs tab={tab} setTab={setTab} user={user} />
+
+      {tab === 'goals' && (
+        <GoalsTab
+          goals={goals}
+          goalsLoading={goalsLoading}
+          expandedGoalId={expandedGoalId}
+          onToggleExpand={handleToggleExpandGoal}
+          user={user}
+          onContribute={handleContributeToGoal}
+          onArchive={handleArchiveGoal}
+          onReorder={handleReorderGoals}
+          showCreateForm={showCreateGoalForm}
+          setShowCreateForm={setShowCreateGoalForm}
+          onCreateGoal={handleCreateGoal}
+          createStatus={createGoalStatus}
+        />
+      )}
 
       {tab === 'inventory' && (
         <InventoryTab

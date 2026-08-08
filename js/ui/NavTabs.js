@@ -5,6 +5,9 @@
 function NavTabs({ tab, setTab, user }) {
   return (
     <div className="nav-tabs">
+      <button className={`nav-tab ${tab === 'goals' ? 'active' : ''}`} onClick={() => setTab('goals')}>
+        Goals
+      </button>
       <button className={`nav-tab ${tab === 'inventory' ? 'active' : ''}`} onClick={() => setTab('inventory')}>
         Inventory
       </button>
