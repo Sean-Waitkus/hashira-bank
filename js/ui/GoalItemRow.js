@@ -86,11 +86,11 @@ function GoalItemRow({ goalId, item, user, allGoals, onTransferGoalContribution 
                 </button>
               </div>
               {openMoveId === li.id && (
-                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <div style={{ marginTop: 6 }}>
                   <select
                     value={targetSelection}
                     onChange={e => setTargetSelection(e.target.value)}
-                    style={{ flex: 1 }}
+                    style={{ width: '100%', marginBottom: 6 }}
                   >
                     <option value="">Select target goal...</option>
                     {eligibleTargets.map(t => (
@@ -103,6 +103,7 @@ function GoalItemRow({ goalId, item, user, allGoals, onTransferGoalContribution 
                     className="btn btn-small"
                     disabled={!targetSelection || moving}
                     onClick={() => handleConfirmMove(li.id)}
+                    style={{ width: '100%' }}
                   >
                     {moving ? '...' : 'Confirm'}
                   </button>

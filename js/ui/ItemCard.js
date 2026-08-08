@@ -158,11 +158,11 @@ function ItemCard({ item, user, allGoals, onDelete, onConfirm, onTransfer, onAll
           ) : allocateOptions.length > 0 && (
             <div>
               {showAllocate ? (
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div>
                   <select
                     value={allocateSelection}
                     onChange={e => setAllocateSelection(e.target.value)}
-                    style={{ flex: 1 }}
+                    style={{ width: '100%', marginBottom: 6 }}
                   >
                     <option value="">Select a goal need...</option>
                     {allocateOptions.map(o => (
@@ -171,12 +171,14 @@ function ItemCard({ item, user, allGoals, onDelete, onConfirm, onTransfer, onAll
                       </option>
                     ))}
                   </select>
-                  <button className="btn btn-small" disabled={!allocateSelection || allocating} onClick={handleAllocate}>
-                    {allocating ? '...' : 'Confirm'}
-                  </button>
-                  <button className="btn btn-small btn-danger" onClick={() => setShowAllocate(false)}>
-                    Cancel
-                  </button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="btn btn-small" disabled={!allocateSelection || allocating} onClick={handleAllocate} style={{ flex: 1 }}>
+                      {allocating ? '...' : 'Confirm'}
+                    </button>
+                    <button className="btn btn-small btn-danger" onClick={() => setShowAllocate(false)} style={{ flex: 1 }}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button className="btn btn-small" onClick={() => setShowAllocate(true)}>

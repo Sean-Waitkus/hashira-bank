@@ -203,6 +203,16 @@ function App() {
         setPage(1);
         fetchInventory({ page: 1 });
         if (tab === 'myitems') fetchMyItems();
+
+        // Admin submissions auto-confirm and credit any linked goal
+        // immediately (see Query_AddItem.gs) — surface that here so it
+        // doesn't look like nothing happened.
+        if (result.goalCredits && result.goalCredits.length > 0) {
+          fetchGoals();
+          const summary = result.goalCredits.map(g => `${g.credited} × ${g.itemName}${g.goalCompleted ? ' 🎉' : ''}`).join(', ');
+          alert(`✓ Submitted and auto-confirmed (you're an admin) — counted toward goal: ${summary}`);
+        }
+
         setTimeout(() => setFormStatus(null), 3000);
       } else if (result.error === 'ACCESS_DENIED') {
         setFormStatus('denied');
