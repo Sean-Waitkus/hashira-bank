@@ -4,14 +4,14 @@
 // directly (not bare hooks) so it doesn't depend on script load order.
 // ═══════════════════════════════════════════════════════════════════
 
-function LocationAutocomplete({ value, onChange, placeholder, user }) {
+function LocationAutocomplete({ value, onChange, placeholder, user, primaryOnly }) {
   const [suggestions, setSuggestions] = React.useState([]);
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const debounceRef = React.useRef(null);
 
   const runSearch = async (val) => {
     try {
-      const data = await searchLocationsApi(val, user);
+      const data = await searchLocationsApi(val, user, primaryOnly);
       if (data.success) setSuggestions(data.results || []);
     } catch (e) {
       console.error('Location search failed:', e);

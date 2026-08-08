@@ -51,6 +51,7 @@ function UpdateLocationsTab({ user, onUpdateLocations, locationStatus, locationR
                 onChange={setHomeLocation}
                 placeholder="e.g., Lorville"
                 user={user}
+                primaryOnly
               />
             </div>
           )}

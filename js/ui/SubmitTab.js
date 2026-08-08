@@ -140,6 +140,7 @@ function SubmitTab({
                     onChange={val => updateBatchRow(index, 'homeLocation', val)}
                     placeholder="e.g., Stanton > microTech > New Babbage"
                     user={user}
+                    primaryOnly
                   />
                 </div>
               </div>
